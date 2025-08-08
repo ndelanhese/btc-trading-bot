@@ -1,74 +1,97 @@
-# BTC Trading Bot
+# 🤖 BTC Trading Bot
 
-Bot automatizado de trading para Bitcoin na plataforma LN Markets, desenvolvido em Go.
+[![Go Version](https://img.shields.io/badge/Go-1.24+-blue.svg)](https://golang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![API Status](https://img.shields.io/badge/API-REST%20%2B%20WebSocket-orange.svg)](https://github.com/yourusername/btc-trading-bot)
+[![LN Markets](https://img.shields.io/badge/LN%20Markets-API%20Ready-green.svg)](https://docs.lnmarkets.com/api/)
+[![Trading Bot](https://img.shields.io/badge/Trading%20Bot-Automated%20BTC-blue.svg)](https://github.com/yourusername/btc-trading-bot)
 
-## Funcionalidades
+> **Automated Bitcoin trading bot with advanced risk management, DCA strategies, and real-time price monitoring for LN Markets platform.**
 
-### 🔐 Autenticação
-- Registro e login de usuários
-- Autenticação JWT
-- Proteção de rotas
+## Features
 
-### 🤖 Automações de Trading
+### 🔐 Authentication
+- User registration and login
+- JWT authentication
+- Route protection
 
-#### 1. Proteção de Margem
-- Monitoramento automático de liquidação
-- Ativação quando preço chega a 5% da liquidação
-- Aumento automático da distância de liquidação para 10%
+### 🤖 Trading Automations
 
-#### 2. Take Profit Automático
-- Atualização diária de take profit (1%)
-- Cálculo automático considerando taxas
-- Aplicação imediata em todas as ordens
+#### 1. Margin Protection
+- Automatic liquidation monitoring
+- Activation when price reaches 5% of liquidation
+- Automatic increase of liquidation distance to 10%
 
-#### 3. Automação de Entradas (DCA)
-- Sistema de Dollar Cost Averaging
-- 9 ordens com $10 cada
-- Intervalos de $50 entre ordens
-- Preço inicial: $116,000
-- Take profit de 0.25% por ordem
-- Alavancagem 10x
+#### 2. Automatic Take Profit
+- Daily take profit updates (1%)
+- Automatic calculation considering fees
+- Immediate application to all orders
 
-#### 4. Alerta de Preço
-- Monitoramento de preços em tempo real
-- Alertas quando preço sai do intervalo $100,000 - $120,000
-- Verificação a cada 1 minuto
+#### 3. Entry Automation (DCA)
+- Dollar Cost Averaging system
+- 9 orders with $10 each
+- $50 intervals between orders
+- Initial price: $116,000
+- Take profit of 0.25% per order
+- 10x leverage
 
-## Tecnologias
+#### 4. Price Alert
+- Real-time price monitoring
+- Alerts when price exits $100,000 - $120,000 range
+- Check every 1 minute
+
+## Technologies
 
 - **Backend**: Go 1.24+
 - **Database**: PostgreSQL
 - **ORM**: SQLx
 - **API**: REST + WebSocket
-- **Autenticação**: JWT
+- **Authentication**: JWT
 - **Trading**: LN Markets API
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 btc-trading-bot/
-├── cmd/api/           # Ponto de entrada da aplicação
-├── internal/          # Código interno da aplicação
-│   ├── database/     # Configuração e migrações do banco
-│   ├── handlers/     # Handlers HTTP
-│   ├── models/       # Modelos de dados
-│   └── services/     # Lógica de negócio
-├── pkg/              # Pacotes reutilizáveis
-│   ├── lnmarkets/    # Cliente da API LN Markets
-│   └── websocket/    # Cliente WebSocket
+├── cmd/api/           # Application entry point
+├── internal/          # Internal application code
+│   ├── database/     # Database configuration and migrations
+│   ├── handlers/     # HTTP handlers
+│   ├── models/       # Data models
+│   └── services/     # Business logic
+├── pkg/              # Reusable packages
+│   ├── lnmarkets/    # LN Markets API client
+│   └── websocket/    # WebSocket client
 ├── go.mod
 ├── go.sum
 └── README.md
 ```
 
-## Configuração
+## Configuration
 
-### 1. Banco de Dados
+### 1. Database
 
-Crie um banco PostgreSQL e configure as variáveis de ambiente:
+Create a PostgreSQL database and configure environment variables:
 
+#### Option A: Interactive Setup
 ```bash
-# .env
+./scripts/setup-env.sh
+```
+
+#### Option B: Manual Setup
+```bash
+# Copy the example file
+cp env.example .env
+
+# Edit the .env file with your settings
+nano .env
+```
+
+#### Required Environment Variables:
+```bash
+# Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
@@ -76,25 +99,32 @@ DB_PASSWORD=your_password
 DB_NAME=btc_trading_bot
 DB_SSLMODE=disable
 
+# JWT Configuration
 JWT_SECRET=your-secret-key-change-this
+
+# Server Configuration
 PORT=8080
 ```
 
-### 2. Instalação
+### 2. Installation
 
 ```bash
-# Clonar o repositório
+# Clone repository
 git clone <repository-url>
 cd btc-trading-bot
 
-# Instalar dependências
+# Install dependencies
 go mod tidy
 
-# Executar migrações (automático na primeira execução)
-go run cmd/api/main.go
+# Setup environment (interactive)
+./scripts/setup-env.sh
+
+# Or manually copy and configure environment
+cp env.example .env
+# Edit .env with your settings
 ```
 
-### 3. Executar
+### 3. Run
 
 ```bash
 go run cmd/api/main.go
@@ -102,33 +132,33 @@ go run cmd/api/main.go
 
 ## API Endpoints
 
-### Autenticação
-- `POST /api/auth/register` - Registrar usuário
+### Authentication
+- `POST /api/auth/register` - Register user
 - `POST /api/auth/login` - Login
 
-### Configurações (Protegidas)
-- `POST /api/lnmarkets/config` - Configurar API LN Markets
-- `GET /api/lnmarkets/config` - Obter configuração LN Markets
+### Configurations (Protected)
+- `POST /api/lnmarkets/config` - Configure LN Markets API
+- `GET /api/lnmarkets/config` - Get LN Markets configuration
 
-### Trading (Protegidas)
-- `POST /api/trading/margin-protection` - Configurar proteção de margem
-- `GET /api/trading/margin-protection` - Obter configuração
-- `POST /api/trading/take-profit` - Configurar take profit
-- `GET /api/trading/take-profit` - Obter configuração
-- `POST /api/trading/entry-automation` - Configurar automação de entrada
-- `GET /api/trading/entry-automation` - Obter configuração
-- `POST /api/trading/price-alert` - Configurar alerta de preço
-- `GET /api/trading/price-alert` - Obter configuração
-- `GET /api/trading/orders` - Listar ordens
-- `POST /api/trading/bot/start` - Iniciar bot
-- `POST /api/trading/bot/stop` - Parar bot
+### Trading (Protected)
+- `POST /api/trading/margin-protection` - Configure margin protection
+- `GET /api/trading/margin-protection` - Get configuration
+- `POST /api/trading/take-profit` - Configure take profit
+- `GET /api/trading/take-profit` - Get configuration
+- `POST /api/trading/entry-automation` - Configure entry automation
+- `GET /api/trading/entry-automation` - Get configuration
+- `POST /api/trading/price-alert` - Configure price alert
+- `GET /api/trading/price-alert` - Get configuration
+- `GET /api/trading/orders` - List orders
+- `POST /api/trading/bot/start` - Start bot
+- `POST /api/trading/bot/stop` - Stop bot
 
 ### Health Check
-- `GET /health` - Status da API
+- `GET /health` - API status
 
-## Exemplos de Uso
+## Usage Examples
 
-### 1. Registrar Usuário
+### 1. Register User
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/register \
@@ -151,7 +181,7 @@ curl -X POST http://localhost:8080/api/auth/login \
   }'
 ```
 
-### 3. Configurar LN Markets
+### 3. Configure LN Markets
 
 ```bash
 curl -X POST http://localhost:8080/api/lnmarkets/config \
@@ -165,7 +195,7 @@ curl -X POST http://localhost:8080/api/lnmarkets/config \
   }'
 ```
 
-### 4. Configurar Proteção de Margem
+### 4. Configure Margin Protection
 
 ```bash
 curl -X POST http://localhost:8080/api/trading/margin-protection \
@@ -178,7 +208,7 @@ curl -X POST http://localhost:8080/api/trading/margin-protection \
   }'
 ```
 
-### 5. Configurar Automação de Entrada
+### 5. Configure Entry Automation
 
 ```bash
 curl -X POST http://localhost:8080/api/trading/entry-automation \
@@ -197,59 +227,59 @@ curl -X POST http://localhost:8080/api/trading/entry-automation \
   }'
 ```
 
-### 6. Iniciar Bot
+### 6. Start Bot
 
 ```bash
 curl -X POST http://localhost:8080/api/trading/bot/start \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-## Segurança
+## Security
 
-- Senhas são hasheadas com bcrypt
-- Tokens JWT para autenticação
-- Rate limiting implementado
-- Validação de entrada em todos os endpoints
-- Conexões HTTPS recomendadas em produção
+- Passwords are hashed with bcrypt
+- JWT tokens for authentication
+- Rate limiting implemented
+- Input validation on all endpoints
+- HTTPS connections recommended in production
 
-## Monitoramento
+## Monitoring
 
-O bot registra logs detalhados de:
-- Atualizações de preço
-- Ativação de proteções
-- Criação de ordens
-- Alertas de preço
-- Erros de API
+The bot logs detailed information about:
+- Price updates
+- Protection activations
+- Order creation
+- Price alerts
+- API errors
 
-## Desenvolvimento
+## Development
 
-### Estrutura de Dados
+### Data Structure
 
-O banco de dados inclui tabelas para:
-- Usuários
-- Configurações LN Markets
-- Proteção de margem
+The database includes tables for:
+- Users
+- LN Markets configurations
+- Margin protection
 - Take profit
-- Automação de entrada
-- Alertas de preço
-- Ordens de trading
+- Entry automation
+- Price alerts
+- Trading orders
 
-### Fluxo de Dados
+### Data Flow
 
-1. **WebSocket** recebe atualizações de preço em tempo real
-2. **Trading Service** processa cada atualização
-3. **Automações** são executadas baseadas nas configurações
-4. **LN Markets API** executa ordens quando necessário
-5. **Database** armazena histórico e configurações
+1. **WebSocket** receives real-time price updates
+2. **Trading Service** processes each update
+3. **Automations** are executed based on configurations
+4. **LN Markets API** executes orders when needed
+5. **Database** stores history and configurations
 
-## Contribuição
+## Contributing
 
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
+1. Fork the project
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-## Licença
+## License
 
-Este projeto está sob a licença MIT.
+This project is licensed under the MIT License.
