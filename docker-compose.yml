@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: btc-trading-bot-db
+    environment:
+      POSTGRES_DB: btc_trading_bot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - btc-trading-network
+
+  api:
+    build: .
+    container_name: btc-trading-bot-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: btc_trading_bot
+      DB_SSLMODE: disable
+      JWT_SECRET: your-secret-key-change-this-in-production
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - btc-trading-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  btc-trading-network:
+    driver: bridge
