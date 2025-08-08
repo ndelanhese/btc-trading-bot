@@ -208,3 +208,66 @@ func (c *Client) GetPrice() (*PriceData, error) {
 
 	return &priceData, nil
 }
+
+func (c *Client) GetAccountBalance() (*UserData, error) {
+	resp, err := c.makeRequest("GET", "/user", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var userData UserData
+	if err := json.Unmarshal(resp, &userData); err != nil {
+		return nil, err
+	}
+
+	return &userData, nil
+}
+
+func (c *Client) GetPositions() ([]TradeResponse, error) {
+	resp, err := c.makeRequest("GET", "/futures/positions", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var positions []TradeResponse
+	if err := json.Unmarshal(resp, &positions); err != nil {
+		return nil, err
+	}
+
+	return positions, nil
+}
+
+func (c *Client) GetPosition(positionID string) (*TradeResponse, error) {
+	resp, err := c.makeRequest("GET", "/futures/position/"+positionID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var position TradeResponse
+	if err := json.Unmarshal(resp, &position); err != nil {
+		return nil, err
+	}
+
+	return &position, nil
+}
+
+func (c *Client) ClosePosition(positionID string) error {
+	_, err := c.makeRequest("POST", "/futures/close", map[string]string{"id": positionID})
+	return err
+}
+
+func (c *Client) UpdateTakeProfit(positionID string, takeProfitPrice float64) error {
+	_, err := c.makeRequest("POST", "/futures/take-profit", map[string]interface{}{
+		"id":    positionID,
+		"price": takeProfitPrice,
+	})
+	return err
+}
+
+func (c *Client) UpdateStopLoss(positionID string, stopLossPrice float64) error {
+	_, err := c.makeRequest("POST", "/futures/stop-loss", map[string]interface{}{
+		"id":    positionID,
+		"price": stopLossPrice,
+	})
+	return err
+}

@@ -1,285 +1,301 @@
-# 🤖 BTC Trading Bot
+# BTC Trading Bot
 
-[![Go Version](https://img.shields.io/badge/Go-1.24+-blue.svg)](https://golang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![API Status](https://img.shields.io/badge/API-REST%20%2B%20WebSocket-orange.svg)](https://github.com/yourusername/btc-trading-bot)
-[![LN Markets](https://img.shields.io/badge/LN%20Markets-API%20Ready-green.svg)](https://docs.lnmarkets.com/api/)
-[![Trading Bot](https://img.shields.io/badge/Trading%20Bot-Automated%20BTC-blue.svg)](https://github.com/yourusername/btc-trading-bot)
+A sophisticated Bitcoin trading bot that integrates with LN Markets API for automated trading with advanced features like margin protection, take-profit automation, entry automation, and price alerts.
 
-> **Automated Bitcoin trading bot with advanced risk management, DCA strategies, and real-time price monitoring for LN Markets platform.**
+## 🚀 Features
 
-## Features
+### Core Trading Features
+- **Real-time Price Monitoring**: WebSocket connection to LN Markets for live price updates
+- **Margin Protection**: Automatically adjusts take-profit when positions are close to liquidation
+- **Take Profit Automation**: Daily percentage-based take-profit adjustments
+- **Entry Automation**: DCA (Dollar Cost Averaging) with configurable parameters
+- **Price Alerts**: Custom price range monitoring with configurable intervals
 
-### 🔐 Authentication
-- User registration and login
-- JWT authentication
-- Route protection
+### API Features
+- **User Authentication**: JWT-based authentication system
+- **Configuration Management**: Store and manage LN Markets API credentials
+- **Bot Management**: Start, stop, and monitor trading bots
+- **Position Management**: View, close, and update positions
+- **Account Balance**: Real-time account balance monitoring
 
-### 🤖 Trading Automations
+## 🛠️ Setup
 
-#### 1. Margin Protection
-- Automatic liquidation monitoring
-- Activation when price reaches 5% of liquidation
-- Automatic increase of liquidation distance to 10%
+### Prerequisites
+- Go 1.19 or higher
+- PostgreSQL database
+- LN Markets API credentials
 
-#### 2. Automatic Take Profit
-- Daily take profit updates (1%)
-- Automatic calculation considering fees
-- Immediate application to all orders
+### Installation
 
-#### 3. Entry Automation (DCA)
-- Dollar Cost Averaging system
-- 9 orders with $10 each
-- $50 intervals between orders
-- Initial price: $116,000
-- Take profit of 0.25% per order
-- 10x leverage
-
-#### 4. Price Alert
-- Real-time price monitoring
-- Alerts when price exits $100,000 - $120,000 range
-- Check every 1 minute
-
-## Technologies
-
-- **Backend**: Go 1.24+
-- **Database**: PostgreSQL
-- **ORM**: SQLx
-- **API**: REST + WebSocket
-- **Authentication**: JWT
-- **Trading**: LN Markets API
-
-## Project Structure
-
-```
-btc-trading-bot/
-├── cmd/api/           # Application entry point
-├── internal/          # Internal application code
-│   ├── database/     # Database configuration and migrations
-│   ├── handlers/     # HTTP handlers
-│   ├── models/       # Data models
-│   └── services/     # Business logic
-├── pkg/              # Reusable packages
-│   ├── lnmarkets/    # LN Markets API client
-│   └── websocket/    # WebSocket client
-├── go.mod
-├── go.sum
-└── README.md
-```
-
-## Configuration
-
-### 1. Database
-
-Create a PostgreSQL database and configure environment variables:
-
-#### Option A: Interactive Setup
+1. **Clone the repository**
 ```bash
-./scripts/setup-env.sh
-```
-
-#### Option B: Manual Setup
-```bash
-# Copy the example file
-cp .env.example .env
-
-# Edit the .env file with your settings
-nano .env
-```
-
-#### Required Environment Variables:
-```bash
-# Database Configuration
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=btc_trading_bot
-DB_SSLMODE=disable
-
-# JWT Configuration
-JWT_SECRET=your-secret-key-change-this
-
-# Server Configuration
-PORT=8080
-```
-
-### 2. Installation
-
-```bash
-# Clone repository
 git clone <repository-url>
 cd btc-trading-bot
-
-# Install dependencies
-go mod tidy
-
-# Setup environment (interactive)
-./scripts/setup-env.sh
-
-# Or manually copy and configure environment
-cp env.example .env
-# Edit .env with your settings
 ```
 
-### 3. Run
+2. **Install dependencies**
+```bash
+go mod download
+```
 
+3. **Set up environment variables**
+```bash
+cp .env.example .env
+```
+
+Edit `.env` file:
+```env
+# Database
+DATABASE_URL=postgres://username:password@localhost:5432/btc_trading_bot?sslmode=disable
+
+# JWT
+JWT_SECRET=your-secret-key-change-this
+
+# Server
+PORT=8080
+
+# LN Markets (optional - can be set via API)
+LN_MARKETS_API_KEY=your-api-key
+LN_MARKETS_SECRET_KEY=your-secret-key
+LN_MARKETS_PASSPHRASE=your-passphrase
+LN_MARKETS_TESTNET=true
+```
+
+4. **Set up database**
+```bash
+# Create database
+createdb btc_trading_bot
+
+# Run migrations (automatic on startup)
+go run cmd/api/main.go
+```
+
+5. **Run the application**
 ```bash
 go run cmd/api/main.go
 ```
 
-## API Endpoints
+## 📚 API Documentation
 
 ### Authentication
-- `POST /api/auth/register` - Register user
-- `POST /api/auth/login` - Login
 
-### Configurations (Protected)
-- `POST /api/lnmarkets/config` - Configure LN Markets API
-- `GET /api/lnmarkets/config` - Get LN Markets configuration
+#### Register User
+```http
+POST /api/auth/register
+Content-Type: application/json
 
-### Trading (Protected)
-- `POST /api/trading/margin-protection` - Configure margin protection
-- `GET /api/trading/margin-protection` - Get configuration
-- `POST /api/trading/take-profit` - Configure take profit
-- `GET /api/trading/take-profit` - Get configuration
-- `POST /api/trading/entry-automation` - Configure entry automation
-- `GET /api/trading/entry-automation` - Get configuration
-- `POST /api/trading/price-alert` - Configure price alert
-- `GET /api/trading/price-alert` - Get configuration
-- `GET /api/trading/orders` - List orders
-- `POST /api/trading/bot/start` - Start bot
-- `POST /api/trading/bot/stop` - Stop bot
-
-### Health Check
-- `GET /health` - API status
-
-## Usage Examples
-
-### 1. Register User
-
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "trader1",
-    "password": "password123",
-    "email": "trader@example.com"
-  }'
+{
+  "username": "your_username",
+  "email": "your_email@example.com",
+  "password": "your_password"
+}
 ```
 
-### 2. Login
+#### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
 
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "trader1",
-    "password": "password123"
-  }'
+{
+  "username": "your_username",
+  "password": "your_password"
+}
 ```
 
-### 3. Configure LN Markets
+### LN Markets Configuration
 
-```bash
-curl -X POST http://localhost:8080/api/lnmarkets/config \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api_key": "your_api_key",
-    "secret_key": "your_secret_key",
-    "passphrase": "your_passphrase",
-    "is_testnet": true
-  }'
+#### Set Configuration
+```http
+POST /api/lnmarkets/config
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "api_key": "your-api-key",
+  "secret_key": "your-secret-key",
+  "passphrase": "your-passphrase",
+  "is_testnet": true
+}
 ```
 
-### 4. Configure Margin Protection
-
-```bash
-curl -X POST http://localhost:8080/api/trading/margin-protection \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "is_enabled": true,
-    "activation_distance": 5.0,
-    "new_liquidation_distance": 10.0
-  }'
+#### Get Configuration
+```http
+GET /api/lnmarkets/config
+Authorization: Bearer <token>
 ```
 
-### 5. Configure Entry Automation
+### Trading Configuration
 
-```bash
-curl -X POST http://localhost:8080/api/trading/entry-automation \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "is_enabled": true,
-    "amount_per_order": 10.0,
-    "margin_per_order": 855,
-    "number_of_orders": 9,
-    "price_variation": 50.0,
-    "initial_price": 116000.0,
-    "take_profit_per_order": 0.25,
-    "operation_type": "buy",
-    "leverage": 10
-  }'
+#### Margin Protection
+```http
+POST /api/trading/margin-protection
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "is_enabled": true,
+  "activation_distance": 5.0,
+  "new_liquidation_distance": 10.0
+}
 ```
 
-### 6. Start Bot
+#### Take Profit
+```http
+POST /api/trading/take-profit
+Authorization: Bearer <token>
+Content-Type: application/json
 
-```bash
-curl -X POST http://localhost:8080/api/trading/bot/start \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+{
+  "is_enabled": true,
+  "daily_percentage": 1.0
+}
 ```
 
-## Security
+#### Entry Automation
+```http
+POST /api/trading/entry-automation
+Authorization: Bearer <token>
+Content-Type: application/json
 
-- Passwords are hashed with bcrypt
-- JWT tokens for authentication
-- Rate limiting implemented
-- Input validation on all endpoints
-- HTTPS connections recommended in production
+{
+  "is_enabled": true,
+  "amount_per_order": 10.0,
+  "margin_per_order": 855,
+  "number_of_orders": 9,
+  "price_variation": 50.0,
+  "initial_price": 116000.0,
+  "take_profit_per_order": 0.25,
+  "operation_type": "buy",
+  "leverage": 10
+}
+```
 
-## Monitoring
+#### Price Alert
+```http
+POST /api/trading/price-alert
+Authorization: Bearer <token>
+Content-Type: application/json
 
-The bot logs detailed information about:
-- Price updates
-- Protection activations
-- Order creation
-- Price alerts
-- API errors
+{
+  "is_enabled": true,
+  "min_price": 100000.0,
+  "max_price": 120000.0,
+  "check_interval": 60
+}
+```
 
-## Development
+### Bot Management
 
-### Data Structure
+#### Start Bot
+```http
+POST /api/trading/bot/start
+Authorization: Bearer <token>
+```
 
-The database includes tables for:
-- Users
-- LN Markets configurations
-- Margin protection
-- Take profit
-- Entry automation
-- Price alerts
-- Trading orders
+#### Stop Bot
+```http
+POST /api/trading/bot/stop
+Authorization: Bearer <token>
+```
 
-### Data Flow
+#### Get Bot Status
+```http
+GET /api/trading/bot/status
+Authorization: Bearer <token>
+```
 
-1. **WebSocket** receives real-time price updates
-2. **Trading Service** processes each update
-3. **Automations** are executed based on configurations
-4. **LN Markets API** executes orders when needed
-5. **Database** stores history and configurations
+### Trading Operations
 
-## Contributing
+#### Get Account Balance
+```http
+GET /api/trading/account/balance
+Authorization: Bearer <token>
+```
 
-1. Fork the project
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+#### Get Positions
+```http
+GET /api/trading/positions
+Authorization: Bearer <token>
+```
 
-## License
+#### Get Position
+```http
+GET /api/trading/positions/{id}
+Authorization: Bearer <token>
+```
 
-[![CC0](https://licensebuttons.net/p/zero/1.0/88x31.png)](https://creativecommons.org/publicdomain/zero/1.0/)
+#### Close Position
+```http
+POST /api/trading/positions/{id}/close
+Authorization: Bearer <token>
+```
+
+#### Update Take Profit
+```http
+POST /api/trading/positions/{id}/take-profit
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "price": 120000.0
+}
+```
+
+#### Update Stop Loss
+```http
+POST /api/trading/positions/{id}/stop-loss
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "price": 110000.0
+}
+```
+
+## 🧪 Testing
+
+Run the test script to verify all endpoints:
+
+```bash
+./scripts/test-bot.sh
+```
+
+## 🔧 Configuration
+
+### Entry Automation Parameters
+- `amount_per_order`: Amount in USD per order
+- `margin_per_order`: Margin in sats per order
+- `number_of_orders`: Total number of orders to place
+- `price_variation`: Price difference between orders
+- `initial_price`: Starting price for the first order
+- `take_profit_per_order`: Take profit percentage per order
+- `operation_type`: "buy" or "sell"
+- `leverage`: Leverage for the positions
+
+### Margin Protection Parameters
+- `activation_distance`: Distance to liquidation to trigger protection (%)
+- `new_liquidation_distance`: New distance to liquidation after protection (%)
+
+### Take Profit Parameters
+- `daily_percentage`: Daily percentage increase for take profit (%)
+
+### Price Alert Parameters
+- `min_price`: Minimum price threshold
+- `max_price`: Maximum price threshold
+- `check_interval`: Interval between checks (seconds)
+
+## 🚨 Security Considerations
+
+1. **API Keys**: Store LN Markets API credentials securely
+2. **JWT Secret**: Use a strong, unique JWT secret
+3. **Database**: Use strong passwords and enable SSL
+4. **Environment**: Run in production with proper firewall rules
+5. **Monitoring**: Implement logging and monitoring for production use
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## ⚠️ Disclaimer
+
+This software is for educational and research purposes. Trading cryptocurrencies involves significant risk. Use at your own risk and never invest more than you can afford to lose.

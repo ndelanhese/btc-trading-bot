@@ -81,6 +81,13 @@ func main() {
 
 	protected.HandleFunc("/trading/bot/start", tradingHandler.StartBot).Methods("POST")
 	protected.HandleFunc("/trading/bot/stop", tradingHandler.StopBot).Methods("POST")
+	protected.HandleFunc("/trading/bot/status", tradingHandler.GetBotStatus).Methods("GET")
+	protected.HandleFunc("/trading/account/balance", tradingHandler.GetAccountBalance).Methods("GET")
+	protected.HandleFunc("/trading/positions", tradingHandler.GetPositions).Methods("GET")
+	protected.HandleFunc("/trading/positions/{id}", tradingHandler.GetPosition).Methods("GET")
+	protected.HandleFunc("/trading/positions/{id}/close", tradingHandler.ClosePosition).Methods("POST")
+	protected.HandleFunc("/trading/positions/{id}/take-profit", tradingHandler.UpdateTakeProfit).Methods("POST")
+	protected.HandleFunc("/trading/positions/{id}/stop-loss", tradingHandler.UpdateStopLoss).Methods("POST")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

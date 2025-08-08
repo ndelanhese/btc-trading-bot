@@ -8,6 +8,9 @@ import (
 	"btc-trading-bot/internal/database"
 	"btc-trading-bot/internal/models"
 	"btc-trading-bot/internal/services"
+	"btc-trading-bot/pkg/lnmarkets"
+
+	"github.com/gorilla/mux"
 )
 
 type TradingHandler struct {
@@ -382,9 +385,223 @@ func (h *TradingHandler) StopBot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.tradingService.Stop()
+	userID := r.Context().Value("user_id").(int)
+
+	err := h.tradingService.StopBot(userID)
+	if err != nil {
+		http.Error(w, "Failed to stop bot: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Trading bot stopped successfully"})
+}
+
+func (h *TradingHandler) GetBotStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := r.Context().Value("user_id").(int)
+
+	status, err := h.tradingService.GetBotStatus(userID)
+	if err != nil {
+		http.Error(w, "Failed to get bot status: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
+}
+
+func (h *TradingHandler) GetAccountBalance(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := r.Context().Value("user_id").(int)
+
+	// Get LN Markets config for this user
+	var config models.LNMarketsConfig
+	err := h.db.Get(&config, "SELECT * FROM ln_markets_config WHERE user_id = $1", userID)
+	if err != nil {
+		http.Error(w, "LN Markets configuration not found", http.StatusNotFound)
+		return
+	}
+
+	client := lnmarkets.NewClient(config.APIKey, config.SecretKey, config.Passphrase, config.IsTestnet)
+	balance, err := client.GetAccountBalance()
+	if err != nil {
+		http.Error(w, "Failed to get account balance: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(balance)
+}
+
+func (h *TradingHandler) GetPositions(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := r.Context().Value("user_id").(int)
+
+	var config models.LNMarketsConfig
+	err := h.db.Get(&config, "SELECT * FROM ln_markets_config WHERE user_id = $1", userID)
+	if err != nil {
+		http.Error(w, "LN Markets configuration not found", http.StatusNotFound)
+		return
+	}
+
+	client := lnmarkets.NewClient(config.APIKey, config.SecretKey, config.Passphrase, config.IsTestnet)
+	positions, err := client.GetPositions()
+	if err != nil {
+		http.Error(w, "Failed to get positions: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(positions)
+}
+
+func (h *TradingHandler) GetPosition(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	positionID := vars["id"]
+
+	userID := r.Context().Value("user_id").(int)
+
+	var config models.LNMarketsConfig
+	err := h.db.Get(&config, "SELECT * FROM ln_markets_config WHERE user_id = $1", userID)
+	if err != nil {
+		http.Error(w, "LN Markets configuration not found", http.StatusNotFound)
+		return
+	}
+
+	client := lnmarkets.NewClient(config.APIKey, config.SecretKey, config.Passphrase, config.IsTestnet)
+	position, err := client.GetPosition(positionID)
+	if err != nil {
+		http.Error(w, "Failed to get position: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(position)
+}
+
+func (h *TradingHandler) ClosePosition(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	positionID := vars["id"]
+
+	userID := r.Context().Value("user_id").(int)
+
+	var config models.LNMarketsConfig
+	err := h.db.Get(&config, "SELECT * FROM ln_markets_config WHERE user_id = $1", userID)
+	if err != nil {
+		http.Error(w, "LN Markets configuration not found", http.StatusNotFound)
+		return
+	}
+
+	client := lnmarkets.NewClient(config.APIKey, config.SecretKey, config.Passphrase, config.IsTestnet)
+	err = client.ClosePosition(positionID)
+	if err != nil {
+		http.Error(w, "Failed to close position: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Position closed successfully"})
+}
+
+func (h *TradingHandler) UpdateTakeProfit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	positionID := vars["id"]
+
+	var request struct {
+		Price float64 `json:"price"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("user_id").(int)
+
+	var config models.LNMarketsConfig
+	err := h.db.Get(&config, "SELECT * FROM ln_markets_config WHERE user_id = $1", userID)
+	if err != nil {
+		http.Error(w, "LN Markets configuration not found", http.StatusNotFound)
+		return
+	}
+
+	client := lnmarkets.NewClient(config.APIKey, config.SecretKey, config.Passphrase, config.IsTestnet)
+	err = client.UpdateTakeProfit(positionID, request.Price)
+	if err != nil {
+		http.Error(w, "Failed to update take profit: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Take profit updated successfully"})
+}
+
+func (h *TradingHandler) UpdateStopLoss(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	positionID := vars["id"]
+
+	var request struct {
+		Price float64 `json:"price"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("user_id").(int)
+
+	var config models.LNMarketsConfig
+	err := h.db.Get(&config, "SELECT * FROM ln_markets_config WHERE user_id = $1", userID)
+	if err != nil {
+		http.Error(w, "LN Markets configuration not found", http.StatusNotFound)
+		return
+	}
+
+	client := lnmarkets.NewClient(config.APIKey, config.SecretKey, config.Passphrase, config.IsTestnet)
+	err = client.UpdateStopLoss(positionID, request.Price)
+	if err != nil {
+		http.Error(w, "Failed to update stop loss: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Stop loss updated successfully"})
 }
