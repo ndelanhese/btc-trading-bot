@@ -19,11 +19,11 @@ if [ -f ".env" ]; then
 fi
 
 # Copy the example file
-if [ -f "env.example" ]; then
-    cp env.example .env
-    echo "✅ Created .env file from env.example"
+if [ -f ".env.example" ]; then
+    cp .env.example .env
+    echo "✅ Created .env file from .env.example"
 else
-    echo "❌ env.example file not found!"
+    echo "❌ .env.example file not found!"
     exit 1
 fi
 

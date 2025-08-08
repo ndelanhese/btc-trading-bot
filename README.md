@@ -83,7 +83,7 @@ Create a PostgreSQL database and configure environment variables:
 #### Option B: Manual Setup
 ```bash
 # Copy the example file
-cp env.example .env
+cp .env.example .env
 
 # Edit the .env file with your settings
 nano .env
