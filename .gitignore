@@ -146,6 +146,11 @@ auto-save-list
 tramp
 .\#*
 
+# Cursor
+.cursor
+.cursorrules
+.cursorignore
+
 # OS Generated Files
 # =============================================================================
 # macOS
