@@ -34,7 +34,7 @@ go.work
 
 # Build artifacts
 btc-trading-bot
-# main
+main
 api
 
 # Database Files
