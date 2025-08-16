@@ -73,6 +73,11 @@ go run cmd/api/main.go
 5. **Run the application**
 ```bash
 go run cmd/api/main.go
+
+# Or
+
+# Use air for dev mode with watch (air installation: https://github.com/air-verse/air)
+air
 ```
 
 ## 📚 API Documentation

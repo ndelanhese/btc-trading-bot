@@ -35,6 +35,19 @@ services:
       - btc-trading-network
     restart: unless-stopped
 
+  swagger:
+    image: swaggerapi/swagger-ui
+    container_name: btc-trading-bot-swagger
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    networks:
+      - btc-trading-network
+    environment:
+      SWAGGER_JSON: /swagger.yaml
+    volumes:
+      - ./swagger.yaml:/swagger.yaml:ro
+
 volumes:
   postgres_data:
 

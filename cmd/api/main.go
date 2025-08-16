@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 
@@ -12,6 +13,27 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+// CORS middleware function
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+		w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -28,7 +50,7 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	jwtSecret := getEnv("JWT_SECRET", "your-secret-key-change-this")
+	jwtSecret := getEnv("JWT_SECRET", randomString(32))
 	authService := services.NewAuthService(db, jwtSecret)
 	tradingService := services.NewTradingService(db)
 
@@ -37,23 +59,21 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	// Apply CORS middleware to all routes
+	router.Use(corsMiddleware)
 
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	})
-
+	// Auth endpoints
 	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
 	router.HandleFunc("/api/auth/login", authHandler.Login).Methods("POST")
+
+	// Handle OPTIONS for all API routes
+	router.HandleFunc("/api/{rest:.*}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		http.NotFound(w, r)
+	}).Methods("OPTIONS")
 
 	protected := router.PathPrefix("/api").Subrouter()
 	protected.Use(func(next http.Handler) http.Handler {
@@ -105,4 +125,12 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func randomString(length int) string {
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
