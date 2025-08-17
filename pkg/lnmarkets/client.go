@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 )
@@ -26,7 +27,7 @@ type TradeRequest struct {
 	Type     string  `json:"type"`
 	Amount   float64 `json:"amount"`
 	Price    float64 `json:"price"`
-	Leverage int     `json:"leverage"`
+	Leverage float64 `json:"leverage"`
 }
 
 type TradeResponse struct {
@@ -34,7 +35,7 @@ type TradeResponse struct {
 	Type     string  `json:"type"`
 	Amount   float64 `json:"amount"`
 	Price    float64 `json:"price"`
-	Leverage int     `json:"leverage"`
+	Leverage float64 `json:"leverage"`
 	Status   string  `json:"status"`
 }
 
@@ -70,7 +71,16 @@ func (c *Client) createSignature(timestamp, method, path, params string) string 
 	message := timestamp + method + path + params
 	h := hmac.New(sha256.New, []byte(c.SecretKey))
 	h.Write([]byte(message))
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+	signature := base64.StdEncoding.EncodeToString(h.Sum(nil))
+
+	// Debug log (only if DEBUG_LNMARKETS is set)
+	if os.Getenv("DEBUG_LNMARKETS") == "true" {
+		fmt.Printf("DEBUG: Raw Message: %s\n", message)
+		fmt.Printf("DEBUG: Creating signature for message: %s\n", message)
+		fmt.Printf("DEBUG: Generated signature: %s\n", signature)
+	}
+
+	return signature
 }
 
 func (c *Client) makeRequest(method, path string, data interface{}) ([]byte, error) {
@@ -78,18 +88,44 @@ func (c *Client) makeRequest(method, path string, data interface{}) ([]byte, err
 
 	var params string
 	var body io.Reader
+	var cleanPath string
+	var fullPath string
+
+	// Parse the path to separate base path from query parameters
+	parsedPath, err := url.Parse(path)
+	if err != nil {
+		return nil, fmt.Errorf("invalid path: %v", err)
+	}
+
+	cleanPath = parsedPath.Path
+	pathQueryParams := parsedPath.Query()
 
 	if method == "GET" || method == "DELETE" {
+		// Combine path query params with data query params
+		queryParams := url.Values{}
+
+		// Add query params from the path
+		for k, v := range pathQueryParams {
+			queryParams[k] = v
+		}
+
+		// Add query params from data
 		if data != nil {
-			queryParams := url.Values{}
 			if mapData, ok := data.(map[string]interface{}); ok {
 				for k, v := range mapData {
 					queryParams.Set(k, fmt.Sprintf("%v", v))
 				}
 			}
-			params = queryParams.Encode()
+		}
+
+		params = queryParams.Encode()
+		if params != "" {
+			fullPath = cleanPath + "?" + params
+		} else {
+			fullPath = cleanPath
 		}
 	} else {
+		fullPath = cleanPath
 		if data != nil {
 			jsonData, err := json.Marshal(data)
 			if err != nil {
@@ -100,9 +136,14 @@ func (c *Client) makeRequest(method, path string, data interface{}) ([]byte, err
 		}
 	}
 
-	signature := c.createSignature(timestamp, method, path, params)
+	baseURL, err := url.Parse(c.BaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid base URL: %v", err)
+	}
+	signaturePath := baseURL.Path + cleanPath
+	signature := c.createSignature(timestamp, method, signaturePath, params)
 
-	req, err := http.NewRequest(method, c.BaseURL+path, body)
+	req, err := http.NewRequest(method, c.BaseURL+fullPath, body)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +155,20 @@ func (c *Client) makeRequest(method, path string, data interface{}) ([]byte, err
 
 	if method != "GET" && method != "DELETE" {
 		req.Header.Set("Content-Type", "application/json")
+	}
+
+	// Debug log (only if DEBUG_LNMARKETS is set)
+	if os.Getenv("DEBUG_LNMARKETS") == "true" {
+		fmt.Printf("DEBUG: Request URL: %s\n", c.BaseURL+fullPath)
+		fmt.Printf("DEBUG: Request method: %s\n", method)
+		fmt.Printf("DEBUG: Request headers:\n")
+		fmt.Printf("  LNM-ACCESS-KEY: %s\n", c.APIKey)
+		fmt.Printf("  LNM-ACCESS-SIGNATURE: %s\n", signature)
+		fmt.Printf("  LNM-ACCESS-PASSPHRASE: %s\n", c.Passphrase)
+		fmt.Printf("  LNM-ACCESS-TIMESTAMP: %s\n", timestamp)
+		if method != "GET" && method != "DELETE" {
+			fmt.Printf("  Content-Type: application/json\n")
+		}
 	}
 
 	resp, err := c.HTTPClient.Do(req)
@@ -223,8 +278,15 @@ func (c *Client) GetAccountBalance() (*UserData, error) {
 	return &userData, nil
 }
 
-func (c *Client) GetPositions() ([]TradeResponse, error) {
-	resp, err := c.makeRequest("GET", "/futures/positions", nil)
+func (c *Client) GetPositions(positionType string) ([]TradeResponse, error) {
+	var path string
+	if positionType != "" {
+		path = "/futures?type=" + positionType
+	} else {
+		path = "/futures?type=running"
+	}
+
+	resp, err := c.makeRequest("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +300,7 @@ func (c *Client) GetPositions() ([]TradeResponse, error) {
 }
 
 func (c *Client) GetPosition(positionID string) (*TradeResponse, error) {
-	resp, err := c.makeRequest("GET", "/futures/position/"+positionID, nil)
+	resp, err := c.makeRequest("GET", "/futures/trades/"+positionID, nil)
 	if err != nil {
 		return nil, err
 	}

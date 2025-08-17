@@ -67,12 +67,12 @@ LN_MARKETS_TESTNET=true
 createdb btc_trading_bot
 
 # Run migrations (automatic on startup)
-go run cmd/api/main.go
+go run main.go
 ```
 
 5. **Run the application**
 ```bash
-go run cmd/api/main.go
+go run main.go
 
 # Or
 

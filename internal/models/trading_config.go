@@ -5,7 +5,7 @@ import (
 )
 
 type LNMarketsConfig struct {
-	ID         int       `db:"id" json:"id"`
+	ID         int       `db:"id" json:"id" gorm:"primaryKey;autoIncrement"`
 	UserID     int       `db:"user_id" json:"user_id"`
 	APIKey     string    `db:"api_key" json:"api_key"`
 	SecretKey  string    `db:"secret_key" json:"secret_key"`
@@ -47,7 +47,7 @@ type EntryAutomation struct {
 	InitialPrice       float64   `db:"initial_price" json:"initial_price"`
 	TakeProfitPerOrder float64   `db:"take_profit_per_order" json:"take_profit_per_order"`
 	OperationType      string    `db:"operation_type" json:"operation_type"`
-	Leverage           int       `db:"leverage" json:"leverage"`
+	Leverage           float64   `db:"leverage" json:"leverage"`
 	CreatedAt          time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
 }
@@ -71,7 +71,7 @@ type TradingOrder struct {
 	Type            string    `db:"type" json:"type"`
 	Amount          float64   `db:"amount" json:"amount"`
 	Price           float64   `db:"price" json:"price"`
-	Leverage        int       `db:"leverage" json:"leverage"`
+	Leverage        float64   `db:"leverage" json:"leverage"`
 	Status          string    `db:"status" json:"status"`
 	TakeProfitPrice float64   `db:"take_profit_price" json:"take_profit_price"`
 	StopLossPrice   float64   `db:"stop_loss_price" json:"stop_loss_price"`

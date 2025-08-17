@@ -61,7 +61,7 @@ func (db *Database) RunMigrations() error {
 			initial_price DECIMAL(15,2) DEFAULT 116000.0,
 			take_profit_per_order DECIMAL(5,2) DEFAULT 0.25,
 			operation_type VARCHAR(10) DEFAULT 'buy',
-			leverage INTEGER DEFAULT 10,
+			leverage DECIMAL(5,2) DEFAULT 10.0,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)`,
@@ -85,7 +85,7 @@ func (db *Database) RunMigrations() error {
 			type VARCHAR(10) NOT NULL,
 			amount DECIMAL(15,2) NOT NULL,
 			price DECIMAL(15,2) NOT NULL,
-			leverage INTEGER NOT NULL,
+			leverage DECIMAL(5,2) NOT NULL,
 			status VARCHAR(20) DEFAULT 'open',
 			take_profit_price DECIMAL(15,2),
 			stop_loss_price DECIMAL(15,2),

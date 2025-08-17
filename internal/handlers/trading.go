@@ -33,15 +33,21 @@ func (h *TradingHandler) SetLNMarketsConfig(w http.ResponseWriter, r *http.Reque
 
 	userID := r.Context().Value("user_id").(int)
 
-	var config models.LNMarketsConfig
-	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+	var request models.LNMarketsConfigRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	config.UserID = userID
-	config.CreatedAt = time.Now()
-	config.UpdatedAt = time.Now()
+	config := models.LNMarketsConfig{
+		UserID:     userID,
+		APIKey:     request.APIKey,
+		SecretKey:  request.SecretKey,
+		Passphrase: request.Passphrase,
+		IsTestnet:  request.IsTestnet,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
 
 	var existingConfig models.LNMarketsConfig
 	err := h.db.Get(&existingConfig, "SELECT id FROM ln_markets_config WHERE user_id = $1", userID)
@@ -95,15 +101,20 @@ func (h *TradingHandler) SetMarginProtection(w http.ResponseWriter, r *http.Requ
 
 	userID := r.Context().Value("user_id").(int)
 
-	var config models.MarginProtection
-	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+	var request models.MarginProtectionRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	config.UserID = userID
-	config.CreatedAt = time.Now()
-	config.UpdatedAt = time.Now()
+	config := models.MarginProtection{
+		UserID:                 userID,
+		IsEnabled:              request.IsEnabled,
+		ActivationDistance:     request.ActivationDistance,
+		NewLiquidationDistance: request.NewLiquidationDistance,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+	}
 
 	var existingConfig models.MarginProtection
 	err := h.db.Get(&existingConfig, "SELECT id FROM margin_protection WHERE user_id = $1", userID)
@@ -157,16 +168,20 @@ func (h *TradingHandler) SetTakeProfit(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value("user_id").(int)
 
-	var config models.TakeProfit
-	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+	var request models.TakeProfitRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	config.UserID = userID
-	config.CreatedAt = time.Now()
-	config.UpdatedAt = time.Now()
-	config.LastUpdate = time.Now()
+	config := models.TakeProfit{
+		UserID:          userID,
+		IsEnabled:       request.IsEnabled,
+		DailyPercentage: request.DailyPercentage,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		LastUpdate:      time.Now(),
+	}
 
 	var existingConfig models.TakeProfit
 	err := h.db.Get(&existingConfig, "SELECT id FROM take_profit WHERE user_id = $1", userID)
@@ -220,15 +235,26 @@ func (h *TradingHandler) SetEntryAutomation(w http.ResponseWriter, r *http.Reque
 
 	userID := r.Context().Value("user_id").(int)
 
-	var config models.EntryAutomation
-	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+	var request models.EntryAutomationRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	config.UserID = userID
-	config.CreatedAt = time.Now()
-	config.UpdatedAt = time.Now()
+	config := models.EntryAutomation{
+		UserID:             userID,
+		IsEnabled:          request.IsEnabled,
+		AmountPerOrder:     request.AmountPerOrder,
+		MarginPerOrder:     request.MarginPerOrder,
+		NumberOfOrders:     request.NumberOfOrders,
+		PriceVariation:     request.PriceVariation,
+		InitialPrice:       request.InitialPrice,
+		TakeProfitPerOrder: request.TakeProfitPerOrder,
+		OperationType:      request.OperationType,
+		Leverage:           request.Leverage,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+	}
 
 	var existingConfig models.EntryAutomation
 	err := h.db.Get(&existingConfig, "SELECT id FROM entry_automation WHERE user_id = $1", userID)
@@ -286,16 +312,22 @@ func (h *TradingHandler) SetPriceAlert(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value("user_id").(int)
 
-	var config models.PriceAlert
-	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
+	var request models.PriceAlertRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	config.UserID = userID
-	config.CreatedAt = time.Now()
-	config.UpdatedAt = time.Now()
-	config.LastAlert = time.Now()
+	config := models.PriceAlert{
+		UserID:        userID,
+		IsEnabled:     request.IsEnabled,
+		MinPrice:      request.MinPrice,
+		MaxPrice:      request.MaxPrice,
+		CheckInterval: request.CheckInterval,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+		LastAlert:     time.Now(),
+	}
 
 	var existingConfig models.PriceAlert
 	err := h.db.Get(&existingConfig, "SELECT id FROM price_alert WHERE user_id = $1", userID)
@@ -449,6 +481,21 @@ func (h *TradingHandler) GetPositions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get and validate the type parameter
+	positionType := r.URL.Query().Get("type")
+
+	// Validate allowed values
+	allowedTypes := map[string]bool{
+		"running": true,
+		"open":    true,
+		"closed":  true,
+	}
+
+	if positionType != "" && !allowedTypes[positionType] {
+		http.Error(w, "Invalid type parameter. Allowed values: running, open, closed", http.StatusBadRequest)
+		return
+	}
+
 	userID := r.Context().Value("user_id").(int)
 
 	var config models.LNMarketsConfig
@@ -459,7 +506,7 @@ func (h *TradingHandler) GetPositions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := lnmarkets.NewClient(config.APIKey, config.SecretKey, config.Passphrase, config.IsTestnet)
-	positions, err := client.GetPositions()
+	positions, err := client.GetPositions(positionType)
 	if err != nil {
 		http.Error(w, "Failed to get positions: "+err.Error(), http.StatusInternalServerError)
 		return

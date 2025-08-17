@@ -28,7 +28,7 @@ createdb btc_trading_bot
 go run cmd/api/main.go
 
 # Build and run executable
-go build -o btc-trading-bot cmd/api/main.go
+go build -o btc-trading-bot main.go
 ./btc-trading-bot
 
 # Run with Docker
