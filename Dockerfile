@@ -12,7 +12,7 @@ RUN go mod download
 COPY . .
 
 # Compilar a aplicação
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o btc-trading-bot cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o btc-trading-bot main.go
 
 # Imagem final
 FROM alpine:latest
