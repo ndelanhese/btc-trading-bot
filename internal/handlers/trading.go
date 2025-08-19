@@ -44,7 +44,7 @@ func (h *TradingHandler) SetLNMarketsConfig(w http.ResponseWriter, r *http.Reque
 		APIKey:     request.APIKey,
 		SecretKey:  request.SecretKey,
 		Passphrase: request.Passphrase,
-		IsTestnet:  request.IsTestnet,
+		IsTestnet:  request.GetIsTestnet(),
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -109,7 +109,7 @@ func (h *TradingHandler) SetMarginProtection(w http.ResponseWriter, r *http.Requ
 
 	config := models.MarginProtection{
 		UserID:                 userID,
-		IsEnabled:              request.IsEnabled,
+		IsEnabled:              request.GetIsEnabled(),
 		ActivationDistance:     request.ActivationDistance,
 		NewLiquidationDistance: request.NewLiquidationDistance,
 		CreatedAt:              time.Now(),
@@ -176,7 +176,7 @@ func (h *TradingHandler) SetTakeProfit(w http.ResponseWriter, r *http.Request) {
 
 	config := models.TakeProfit{
 		UserID:          userID,
-		IsEnabled:       request.IsEnabled,
+		IsEnabled:       request.GetIsEnabled(),
 		DailyPercentage: request.DailyPercentage,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
@@ -243,7 +243,7 @@ func (h *TradingHandler) SetEntryAutomation(w http.ResponseWriter, r *http.Reque
 
 	config := models.EntryAutomation{
 		UserID:             userID,
-		IsEnabled:          request.IsEnabled,
+		IsEnabled:          request.GetIsEnabled(),
 		AmountPerOrder:     request.AmountPerOrder,
 		MarginPerOrder:     request.MarginPerOrder,
 		NumberOfOrders:     request.NumberOfOrders,
@@ -320,7 +320,7 @@ func (h *TradingHandler) SetPriceAlert(w http.ResponseWriter, r *http.Request) {
 
 	config := models.PriceAlert{
 		UserID:        userID,
-		IsEnabled:     request.IsEnabled,
+		IsEnabled:     request.GetIsEnabled(),
 		MinPrice:      request.MinPrice,
 		MaxPrice:      request.MaxPrice,
 		CheckInterval: request.CheckInterval,
