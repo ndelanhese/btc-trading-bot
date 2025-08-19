@@ -19,11 +19,22 @@ var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345
 // CORS middleware function
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set CORS headers
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-		w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+		// Get allowed origin from environment variable, default to localhost:3000 for development
+		allowedOrigin := getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+
+		// Check if the request origin matches the allowed origin
+		origin := r.Header.Get("Origin")
+		if origin == allowedOrigin {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+
+		allowedMethods := getEnv("CORS_ALLOWED_METHODS", "GET, POST, PUT, DELETE, OPTIONS")
+		allowedHeaders := getEnv("CORS_ALLOWED_HEADERS", "Content-Type, Authorization, X-Requested-With")
+		maxAge := getEnv("CORS_MAX_AGE", "86400")
+
+		w.Header().Set("Access-Control-Allow-Methods", allowedMethods)
+		w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+		w.Header().Set("Access-Control-Max-Age", maxAge) // 24 hours
 
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {
