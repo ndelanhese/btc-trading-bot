@@ -28,8 +28,8 @@ WORKDIR /root/
 COPY --from=builder /app/btc-trading-bot .
 COPY --from=builder /app/migrate .
 
-# Copiar scripts directory
 COPY --from=builder /app/scripts ./scripts
+RUN chmod +x ./scripts/migrate-docker.sh
 
 # Expor porta
 EXPOSE 8080
