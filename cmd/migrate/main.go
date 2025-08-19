@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"btc-trading-bot/internal/database"
 
@@ -27,4 +28,5 @@ func main() {
 	}
 
 	log.Println("✅ Database migrations completed successfully")
+	os.Exit(0)
 }
