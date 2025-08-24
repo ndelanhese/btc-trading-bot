@@ -64,9 +64,12 @@ func main() {
 	jwtSecret := getEnv("JWT_SECRET", randomString(32))
 	authService := services.NewAuthService(db, jwtSecret)
 	tradingService := services.NewTradingService(db)
+	priceAggregator := services.NewPriceAggregator()
+	priceAggregator.Start()
 
 	authHandler := handlers.NewAuthHandler(authService)
 	tradingHandler := handlers.NewTradingHandler(db, tradingService)
+	wsHandler := handlers.NewWebSocketHandler(priceAggregator, authService)
 
 	router := mux.NewRouter()
 
@@ -119,6 +122,8 @@ func main() {
 	protected.HandleFunc("/trading/positions/{id}/close", tradingHandler.ClosePosition).Methods("POST")
 	protected.HandleFunc("/trading/positions/{id}/take-profit", tradingHandler.UpdateTakeProfit).Methods("POST")
 	protected.HandleFunc("/trading/positions/{id}/stop-loss", tradingHandler.UpdateStopLoss).Methods("POST")
+
+	router.HandleFunc("/api/ws/btc-price", wsHandler.StreamBTCPrice).Methods("GET")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
